@@ -38,3 +38,15 @@ Route::get('temperature/get', [
 Route::get('methane/get', [
     'uses' => 'DataController@getMethane'
 ]);
+
+Route::get('carbon_monoxide/get', [
+    'uses' => 'DataController@getCarbonMonoxide'
+]);
+
+Route::get('humidity/overlimit', [
+    'uses' => 'DataController@getHumidityOverLimit'
+]);
+
+Route::get('temperature/overlimit', [
+    'uses' => 'DataController@getTemperatureOverLimit'
+]);

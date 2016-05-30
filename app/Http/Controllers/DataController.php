@@ -60,7 +60,11 @@ class DataController extends Controller {
 	public function getHumidities() {
         $date = Request::input("date");
 		$data = array();
-        $query = "select slave_name, TRUNCATE(avg(humidity),1) as humidity, hour(added_on) as added_on, count(*) as numberOfLogs from humidities where added_on between '" . $date . "' and '" . $date . " 23:59:59' group by hour(added_on), slave_name";
+        if(isset($date)) 
+            $query = "select slave_name, TRUNCATE(avg(humidity),1) as humidity, hour(added_on) as added_on, count(*) as numberOfLogs from humidities where added_on between '" . $date . "' and '" . $date . " 23:59:59' group by hour(added_on), slave_name";
+        else
+            $query = "select slave_name, TRUNCATE(avg(humidity),1) as humidity, hour(added_on) as added_on, count(*) as numberOfLogs from humidities";
+        
         try {
             $res = DB::select($query);
             //$res = DB::table('humidities')->whereBetween('added_on', ["'".$date."'","'".$date." 23:59:59'"])->get();
@@ -118,6 +122,33 @@ class DataController extends Controller {
         }
     }
 
+    public function getCarbonMonoxide() {
+        $date = Request::input("date");
+        $data = array();
+        $query = "select TRUNCATE(avg(carbon_value),1) as carbon_value, hour(added_on) as added_on, count(*) as numberOfLogs from carbon_monoxide where added_on between '" . $date . "' and '" . $date . " 23:59:59' group by hour(added_on)";
+        
+        try {
+            $res = DB::select($query);
+            for ($i=0; $i<count($res); $i++) {
+                $row = array (
+                    "carbon_value"=>$res[$i]->carbon_value,
+                    "added_on"=>$res[$i]->added_on,
+                    "numberOfLogs"=>$res[$i]->numberOfLogs
+                );
+                array_push($data, $row);
+            }
+            header("Access-Control-Allow-Origin: *");
+            return json_encode($data);
+        }
+        catch(QueryException $e) {
+            $data = array(
+                "status" => $e.getMessage()
+            );
+            header("Access-Control-Allow-Origin: *");
+            return json_encode($data);
+        }
+    }
+
     public function getTemperatures() {
         $date = Request::input("date");
         $data = array();
@@ -133,6 +164,60 @@ class DataController extends Controller {
                     "numberOfLogs"=>$res[$i]->numberOfLogs
             	);
             	array_push($data, $row);
+            }
+            header("Access-Control-Allow-Origin: *");
+            return json_encode($data);
+        }
+        catch(QueryException $e) {
+            $data = array(
+                "status" => $e.getMessage()
+            );
+            header("Access-Control-Allow-Origin: *");
+            return json_encode($data);
+        }
+    }
+
+    public function getHumidityOverLimit() {
+        $query = "select slave_name, TRUNCATE(avg(humidity),1) as humidity, added_on, count(*) as numberOfLogs from humidities where humidity < 10 group by hour(added_on), slave_name";
+        //dd($query);
+        $data = array();
+        try {
+            $res = DB::select($query);
+            for ($i=0; $i<count($res); $i++) {
+                $row = array (
+                    "humidity"=>$res[$i]->humidity,
+                    "slave_name"=>$res[$i]->slave_name,
+                    "added_on"=>$res[$i]->added_on,
+                    "numberOfLogs"=>$res[$i]->numberOfLogs
+                );
+                array_push($data, $row);
+            }
+            header("Access-Control-Allow-Origin: *");
+            return json_encode($data);
+        }
+        catch(QueryException $e) {
+            $data = array(
+                "status" => $e.getMessage()
+            );
+            header("Access-Control-Allow-Origin: *");
+            return json_encode($data);
+        }
+    }
+
+    public function getTemperatureOverLimit() {
+        $query = "select slave_name, TRUNCATE(avg(temperature),1) as temperature, added_on, count(*) as numberOfLogs from temperatures where temperature < 5 or temperature > 45 group by hour(added_on), slave_name";
+        //dd($query);
+        $data = array();
+        try {
+            $res = DB::select($query);
+            for ($i=0; $i<count($res); $i++) {
+                $row = array (
+                    "temperature"=>$res[$i]->temperature,
+                    "slave_name"=>$res[$i]->slave_name,
+                    "added_on"=>$res[$i]->added_on,
+                    "numberOfLogs"=>$res[$i]->numberOfLogs
+                );
+                array_push($data, $row);
             }
             header("Access-Control-Allow-Origin: *");
             return json_encode($data);
